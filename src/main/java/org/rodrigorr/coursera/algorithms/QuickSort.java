@@ -1,5 +1,7 @@
 package org.rodrigorr.coursera.algorithms;
 
+import org.rodrigorr.coursera.util.StdRandom;
+
 public class QuickSort {
 
 	private static int partition(Comparable[] a, int lo, int hi) {
@@ -30,6 +32,16 @@ public class QuickSort {
 		int j = partition(a, lo, hi);
 		sort(a, lo, j - 1);
 		sort(a, j + 1, hi);
+	}
+
+	private static boolean less(final Comparable v, final Comparable w) {
+		return v.compareTo(w) < 0;
+	}
+
+	private static void exch(Object[] a, int i, int j) {
+		Object swap = a[i];
+		a[i] = a[j];
+		a[j] = swap;
 	}
 
 }
