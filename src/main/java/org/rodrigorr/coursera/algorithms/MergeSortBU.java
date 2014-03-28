@@ -1,16 +1,9 @@
-/**
- * MergeSortBU.java 27/03/2014
- *
- * Copyright 2014 INDITEX.
- * Departamento de Sistemas
- */
 package org.rodrigorr.coursera.algorithms;
 
 import org.rodrigorr.coursera.util.Util;
 
 /**
  * 
- * @author <a href="mailto:rodrigorr@servicioexterno.inditex.com">Rodrigo Revuelta Roca</a>
  * 
  */
 public class MergeSortBU {
