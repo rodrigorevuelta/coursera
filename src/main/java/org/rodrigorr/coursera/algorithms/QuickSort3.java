@@ -1,10 +1,12 @@
 package org.rodrigorr.coursera.algorithms;
 
 import org.rodrigorr.coursera.util.StdRandom;
+import org.rodrigorr.coursera.util.Util;
 
 public class QuickSort3 {
 
 	public static void sort(Comparable[] a) {
+		Util.imprimirArray(0, 9, a);
 		StdRandom.shuffle(a);
 		sort(a, 0, a.length - 1);
 	}
@@ -14,18 +16,22 @@ public class QuickSort3 {
 			return;
 		int lt = lo, gt = hi;
 		Comparable v = a[lo];
+		
 		int i = lo;
 		while (i <= gt) {
+			
 			int cmp = a[i].compareTo(v);
-			if (cmp < 0)
+			if (cmp < 0){
 				exch(a, lt++, i++);
-			else if (cmp > 0)
+			}else if (cmp > 0){
 				exch(a, i, gt--);
-			else
+			}else
 				i++;
 		}
+		
 		sort(a, lo, lt - 1);
 		sort(a, gt + 1, hi);
+		Util.imprimirArray(lt, gt, a);
 	}
 
 	private static boolean less(final Comparable v, final Comparable w) {

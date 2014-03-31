@@ -33,7 +33,7 @@ public class MergeSortBU {
             }
         }
         vueltaMerge++;
-        Util.imprimirArray(vueltaMerge, a);
+        Util.imprimirArray(vueltaMerge,0, a);
         // assert isSorted(a, lo, hi); // postcondition: a[lo..hi] sorted
     }
 
