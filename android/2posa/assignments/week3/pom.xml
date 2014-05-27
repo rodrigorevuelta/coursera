@@ -2,10 +2,10 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.rodrigorr</groupId>
-    <artifactId>coursera-posa-assignment</artifactId>
+    <artifactId>coursera-posa-assignment-week3</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>coursera-posa-assignment</name>
-    <packaging>pom</packaging>
+    <name>coursera-posa-assignment-week3</name>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>

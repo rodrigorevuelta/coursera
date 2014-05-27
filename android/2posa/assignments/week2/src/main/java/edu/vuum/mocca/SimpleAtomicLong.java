@@ -58,7 +58,6 @@ class SimpleAtomicLong
     public long decrementAndGet()
     {
         long value = 0;
-
         this.mRWLock.writeLock().lock();
         try {
             this.mValue--;
