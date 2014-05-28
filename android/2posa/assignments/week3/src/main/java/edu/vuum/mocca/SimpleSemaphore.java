@@ -14,7 +14,7 @@ public class SimpleSemaphore {
      * Define a ReentrantLock to protect the critical section.
      */
     // TODO - you fill in here
-    ReentrantLock rl = new ReentrantLock();
+    ReentrantLock lock;
 
     /**
      * Define a ConditionObject to wait while the number of permits is 0.
@@ -33,7 +33,8 @@ public class SimpleSemaphore {
         // TODO - you fill in here to initialize the SimpleSemaphore,
         // making sure to allow both fair and non-fair Semaphore
         // semantics.
-        this.rl = new ReentrantLock(fair);
+        this.lock = new ReentrantLock(fair);
+        this.co = lock.newCondition();
         this.sal = new SimpleAtomicLong(permits);
     }
 
@@ -42,7 +43,11 @@ public class SimpleSemaphore {
      */
     public void acquire() throws InterruptedException {
         // TODO - you fill in here.
-        this.rl.lockInterruptibly();
+    	lock.lock();
+        while (sal.get() == 0)
+        	co.await();
+        sal.decrementAndGet();
+        lock.unlock();
     }
 
     /**
@@ -50,6 +55,15 @@ public class SimpleSemaphore {
      */
     public void acquireUninterruptibly() {
         // TODO - you fill in here.
+    	lock.lock();
+        while (sal.get() == 0)
+            try {
+                co.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        sal.decrementAndGet();
+        lock.unlock();
     }
 
     /**
@@ -57,6 +71,13 @@ public class SimpleSemaphore {
      */
     void release() {
         // TODO - you fill in here.
+    	lock.lock();
+        try {
+        	 sal.incrementAndGet();
+            co.signal();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -64,7 +85,6 @@ public class SimpleSemaphore {
      */
     public int availablePermits() {
         // TODO - you fill in here by changing null to the appropriate
-        // return value.
         return (int) this.sal.get();
     }
 }
