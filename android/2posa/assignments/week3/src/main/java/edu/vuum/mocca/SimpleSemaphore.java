@@ -34,7 +34,7 @@ public class SimpleSemaphore {
         // making sure to allow both fair and non-fair Semaphore
         // semantics.
         this.lock = new ReentrantLock(fair);
-        this.co = lock.newCondition();
+        this.co = this.lock.newCondition();
         this.sal = new SimpleAtomicLong(permits);
     }
 
@@ -43,11 +43,12 @@ public class SimpleSemaphore {
      */
     public void acquire() throws InterruptedException {
         // TODO - you fill in here.
-    	lock.lock();
-        while (sal.get() == 0)
-        	co.await();
-        sal.decrementAndGet();
-        lock.unlock();
+        this.lock.lock();
+        while (this.sal.get() == 0) {
+            this.co.await();
+        }
+        this.sal.decrementAndGet();
+        this.lock.unlock();
     }
 
     /**
@@ -55,15 +56,16 @@ public class SimpleSemaphore {
      */
     public void acquireUninterruptibly() {
         // TODO - you fill in here.
-    	lock.lock();
-        while (sal.get() == 0)
+        this.lock.lock();
+        while (this.sal.get() == 0) {
             try {
-                co.await();
-            } catch (InterruptedException e) {
+                this.co.await();
+            } catch (final InterruptedException e) {
                 e.printStackTrace();
             }
-        sal.decrementAndGet();
-        lock.unlock();
+        }
+        this.sal.decrementAndGet();
+        this.lock.unlock();
     }
 
     /**
@@ -71,12 +73,12 @@ public class SimpleSemaphore {
      */
     void release() {
         // TODO - you fill in here.
-    	lock.lock();
+        this.lock.lock();
         try {
-        	 sal.incrementAndGet();
-            co.signal();
+            this.sal.incrementAndGet();
+            this.co.signal();
         } finally {
-            lock.unlock();
+            this.lock.unlock();
         }
     }
 
