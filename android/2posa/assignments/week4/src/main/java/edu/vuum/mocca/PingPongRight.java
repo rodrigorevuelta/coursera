@@ -124,9 +124,9 @@ public class PingPongRight {
         // alternation between threads.
 
         // TODO - You fill in here, make pingSema start out unlocked.
-        final SimpleSemaphore pingSema = null;
+        final SimpleSemaphore pingSema = new SimpleSemaphore(1, false);
         // TODO - You fill in here, make pongSema start out locked.
-        final SimpleSemaphore pongSema = null;
+        final SimpleSemaphore pongSema = new SimpleSemaphore(0, false);
 
         System.out.println(startString);
 
@@ -135,7 +135,7 @@ public class PingPongRight {
         /* * TODO - You fill in here */
         final PlayPingPongThread ping = new PlayPingPongThread(pingString, pingSema, pongSema, maxIterations);
         /* TODO - You fill in here */
-        final PlayPingPongThread pong = new PlayPingPongThread(pongString, pingSema, pongSema, maxIterations);
+        final PlayPingPongThread pong = new PlayPingPongThread(pongString, pongSema, pingSema, maxIterations);
 
         // TODO - Initiate the ping and pong threads, which will call
         // the run() hook method.
