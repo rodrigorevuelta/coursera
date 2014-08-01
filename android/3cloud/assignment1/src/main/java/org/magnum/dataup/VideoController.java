@@ -15,6 +15,7 @@ import org.magnum.dataup.model.VideoStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import retrofit.client.Response;
@@ -53,7 +54,11 @@ public class VideoController implements VideoSvcApi {
      * {@inheritDoc}
      */
     @Override
-    public VideoStatus setVideoData(final long id, final TypedFile videoData) {
+    @RequestMapping(value = VIDEO_DATA_PATH, method = RequestMethod.POST)
+    @ResponseBody
+    public VideoStatus setVideoData(@RequestParam("id") final long id,
+            @RequestParam("photo") final TypedFile videoData) {
+
         System.out.println(videoData.mimeType());
         return null;
     }
