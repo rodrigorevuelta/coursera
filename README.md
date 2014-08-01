@@ -7,3 +7,9 @@ BigData
 Algoritms
 
 -Pattern-Oriented Software Architectures: Programming Mobile Services for Android
+
+-Cloud services
+
+-
+
+-
