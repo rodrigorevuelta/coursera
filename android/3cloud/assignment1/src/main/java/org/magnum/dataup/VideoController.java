@@ -6,9 +6,9 @@
  */
 package org.magnum.dataup;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.magnum.dataup.model.Video;
 import org.magnum.dataup.model.VideoStatus;
@@ -28,12 +28,12 @@ import retrofit.mime.TypedFile;
 @Controller
 public class VideoController implements VideoSvcApi {
 
-    List<Video> videoList = new ArrayList<Video>();
+    List<Video> videoList = new CopyOnWriteArrayList<Video>();
 
     @Override
     @RequestMapping(value = VIDEO_SVC_PATH, method = RequestMethod.GET)
-    public @ResponseBody
-    Collection<Video> getVideoList() {
+    @ResponseBody
+    public Collection<Video> getVideoList() {
         return this.videoList;
     }
 
@@ -41,7 +41,8 @@ public class VideoController implements VideoSvcApi {
      * {@inheritDoc}
      */
     @Override
-    @RequestMapping(value = VIDEO_SVC_PATH, method = RequestMethod.PUT)
+    @RequestMapping(value = VIDEO_SVC_PATH, method = RequestMethod.POST)
+    @ResponseBody
     public Video addVideo(final Video v) {
         this.videoList.add(v);
         v.setId(this.videoList.size());
@@ -53,7 +54,7 @@ public class VideoController implements VideoSvcApi {
      */
     @Override
     public VideoStatus setVideoData(final long id, final TypedFile videoData) {
-        // TODO Auto-generated method stub
+        System.out.println(videoData.mimeType());
         return null;
     }
 
