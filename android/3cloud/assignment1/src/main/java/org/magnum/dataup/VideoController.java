@@ -6,20 +6,26 @@
  */
 package org.magnum.dataup;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.magnum.dataup.model.Video;
 import org.magnum.dataup.model.VideoStatus;
+import org.magnum.dataup.model.VideoStatus.VideoState;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import retrofit.client.Response;
-import retrofit.mime.TypedFile;
+import retrofit.http.Multipart;
 
 /**
  * 
@@ -27,11 +33,15 @@ import retrofit.mime.TypedFile;
  * 
  */
 @Controller
-public class VideoController implements VideoSvcApi {
+public class VideoController {
+
+    public static final String DATA_PARAMETER = "data";
+    public static final String ID_PARAMETER = "id";
+    public static final String VIDEO_SVC_PATH = "/video";
+    public static final String VIDEO_DATA_PATH = VIDEO_SVC_PATH + "/{id}/data";
 
     List<Video> videoList = new CopyOnWriteArrayList<Video>();
 
-    @Override
     @RequestMapping(value = VIDEO_SVC_PATH, method = RequestMethod.GET)
     @ResponseBody
     public Collection<Video> getVideoList() {
@@ -41,10 +51,9 @@ public class VideoController implements VideoSvcApi {
     /**
      * {@inheritDoc}
      */
-    @Override
     @RequestMapping(value = VIDEO_SVC_PATH, method = RequestMethod.POST)
     @ResponseBody
-    public Video addVideo(final Video v) {
+    public Video addVideo(final @RequestBody Video v) {
         this.videoList.add(v);
         v.setId(this.videoList.size());
         return v;
@@ -53,20 +62,24 @@ public class VideoController implements VideoSvcApi {
     /**
      * {@inheritDoc}
      */
-    @Override
+    @Multipart
     @RequestMapping(value = VIDEO_DATA_PATH, method = RequestMethod.POST)
     @ResponseBody
-    public VideoStatus setVideoData(@RequestParam("id") final long id,
-            @RequestParam("photo") final TypedFile videoData) {
-
-        System.out.println(videoData.mimeType());
-        return null;
+    public VideoStatus setVideoData(@PathVariable(ID_PARAMETER) final long id,
+            @RequestParam(DATA_PARAMETER) final MultipartFile videoData) {
+        try {
+            final InputStream is = videoData.getInputStream();
+            // is.read()
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+        final VideoStatus status = new VideoStatus(VideoState.READY);
+        return status;
     }
 
     /**
      * {@inheritDoc}
      */
-    @Override
     public Response getData(final long id) {
         // TODO Auto-generated method stub
         return null;
