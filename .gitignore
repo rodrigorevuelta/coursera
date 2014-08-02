@@ -1,13 +1,15 @@
 *.class
 
 # Package Files #
-*.jar
 *.war
 *.ear
-/target
-/.classpath
-/.project
 .settings
 .project
 .classpath
+.gradle
+bin
 target
+/gradlew
+gradlew.bat
+videos
+tmp
