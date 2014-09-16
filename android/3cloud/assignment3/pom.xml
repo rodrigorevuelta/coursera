@@ -5,14 +5,16 @@
   <artifactId>assignment3</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>assignment3 Maven Mojo</name>
-  <url>http://maven.apache.org</url>
+  <name>assignment3</name>
+  <url>www.coursera.org</url>
   <dependencies>
+  
     <dependency>
-      <groupId>org.apache.maven</groupId>
-      <artifactId>maven-plugin-api</artifactId>
-      <version>2.0</version>
-    </dependency>
+		<groupId>io.netty</groupId>
+		<artifactId>netty</artifactId>
+	<version>3.9.4.Final</version>
+	</dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
