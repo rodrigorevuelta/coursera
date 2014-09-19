@@ -47,11 +47,6 @@ public final class ReactiveServer {
                 return p;
             }
         });
-
-        bootstrap.setOption("child.tcpNoDelay", true);
-        bootstrap.setOption("child.receiveBufferSize", 1048576);
-        bootstrap.setOption("child.sendBufferSize", 1048576);
-
         // Bind and start to accept incoming connections.
         bootstrap.bind(new InetSocketAddress(PORT));
     }
@@ -67,8 +62,8 @@ class EchoServerHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e) {
-        // This method make use of the wrapper facade pattern because doesn't use the sockets api directly.
-        // Send back the received message to the remote peer.
+        // This method make use of the wrapper facade pattern because doesn't use the sockets api directly. 
+    	// Use the netty api. Send back the received message to the remote peer.
         this.transferredBytes.addAndGet(((ChannelBuffer) e.getMessage())
                 .readableBytes());
         final ChannelBuffer buf = (ChannelBuffer) e.getMessage();
