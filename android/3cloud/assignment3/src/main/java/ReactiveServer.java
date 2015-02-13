@@ -48,9 +48,9 @@ public final class ReactiveServer {
             }
         });
 
-        bootstrap.setOption("child.tcpNoDelay", true);
-        bootstrap.setOption("child.receiveBufferSize", 1048576);
-        bootstrap.setOption("child.sendBufferSize", 1048576);
+        // bootstrap.setOption("child.tcpNoDelay", true);
+        // bootstrap.setOption("child.receiveBufferSize", 1048576);
+        // bootstrap.setOption("child.sendBufferSize", 1048576);
 
         // Bind and start to accept incoming connections.
         bootstrap.bind(new InetSocketAddress(PORT));
