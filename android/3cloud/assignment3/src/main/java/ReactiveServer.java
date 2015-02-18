@@ -8,6 +8,53 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+<<<<<<< HEAD
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+
+/**
+ * Use of wrapper facade, Reactor and Acceptor Connector patterns.
+ * 
+ */
+public final class ReactiveServer {
+
+    static final int PORT = Integer.parseInt(System.getProperty("port", "8080"));
+
+    public static void main(final String[] args) throws Exception {
+        // The Acceptor-Connector design pattern decouples connection establishment and service initialization in a
+        // distributed system from the processing performed once a service is initialized. This decoupling is
+        // achieved with three components:acceptors, connectors,andservice handlers. A connector actively establishes a
+        // connection with a remote acceptor component and initializes a service handler to process data exchanged
+        // on the connection. Likewise, an acceptor passively waits for connection requests from remote
+        // connectors, establishing a connection upon arrival of such a request, and initializing a service handler
+        // to process data exchanged on the connection. The initialized service handlers then perform
+        // application-specific processing and communicate via the connection established by the connector
+        // and acceptor components.
+
+        // Configure the bootstrap.
+        final ServerBootstrap bootstrap = new ServerBootstrap(
+                new NioServerSocketChannelFactory(
+                        Executors.newCachedThreadPool(),
+                        Executors.newCachedThreadPool()));
+
+        // Once the event occurs the dispatcher then calls the subscribed methods (often called “handlers”) one by one
+        // and one after another. This is the reactor pattern.
+        bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+            public ChannelPipeline getPipeline() {
+                final ChannelPipeline p = Channels.pipeline();
+                p.addLast("echo", new EchoServerHandler());
+                return p;
+            }
+        });
+
+        // bootstrap.setOption("child.tcpNoDelay", true);
+        // bootstrap.setOption("child.receiveBufferSize", 1048576);
+        // bootstrap.setOption("child.sendBufferSize", 1048576);
+
+        // Bind and start to accept incoming connections.
+        bootstrap.bind(new InetSocketAddress(PORT));
+    }
+}
+=======
 import org.jboss.netty.channel.socket.ServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.oio.OioServerSocketChannelFactory;
 import org.jboss.netty.handler.codec.frame.DelimiterBasedFrameDecoder;
@@ -16,6 +63,7 @@ import org.jboss.netty.handler.codec.string.StringDecoder;
 import org.jboss.netty.handler.codec.string.StringEncoder;
 
 public class ReactiveServer {
+>>>>>>> 5fa0e27f4027d30c3413098f71abcaa3c6412383
 
     private final class EchoServerPipelineFactory implements ChannelPipelineFactory {
         public ChannelPipeline getPipeline() throws Exception {
