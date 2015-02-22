@@ -31,6 +31,8 @@
 enum MsgTypes{
     JOINREQ,
     JOINREP,
+	UPDATEREQ,
+	UPDATEREP,
     DUMMYLASTMSGTYPE
 };
 

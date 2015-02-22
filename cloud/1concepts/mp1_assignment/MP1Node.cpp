@@ -163,6 +163,9 @@ int MP1Node::finishUpThisNode(){
    /*
     * Your code goes here
     */
+	
+    cleanMemberListTable(memberNode);
+    return SUCCESS;
 }
 
 /**
@@ -218,6 +221,129 @@ bool MP1Node::recvCallBack(void *env, char *data, int size ) {
 	/*
 	 * Your code goes here
 	 */
+
+	Member *node = (Member *) env;
+	MessageHdr *msg = (MessageHdr *)data;
+	char *packetData = (char *)(msg + 1);
+
+	//if ( (unsigned)size <  (strlen(packetData)+1) ) {
+	if ( (unsigned)size < sizeof(MessageHdr) ) {
+#ifdef DEBUGLOG
+		log->LOG(&node->addr, "Faulty packet received - ignoring");
+		return false;
+#endif
+	}
+
+#ifdef DEBUGLOG
+	log->LOG(&((Member *)env)->addr, "Received message type %d with %d B payload", msg->msgType, size - sizeof(MessageHdr));
+#endif
+
+	// If not yet in the group then accept only JOINREP
+	if ( (memberNode->inGroup && msg->msgType >= 0 && msg->msgType <= DUMMYLASTMSGTYPE)
+			|| (!memberNode->inGroup && msg->msgType == JOINREP) ) {
+
+		switch(msg->msgType) {
+		case JOINREQ:
+			processJoinReq(env, packetData, size - sizeof(MessageHdr));
+			break;
+		case JOINREP:
+			processJoinRep(env, packetData, size - sizeof(MessageHdr));
+			break;
+		case UPDATEREQ:
+			processUpdateReq(env, packetData, size - sizeof(MessageHdr));
+			break;
+		case UPDATEREP:
+			processUpdateRep(env, packetData, size - sizeof(MessageHdr));
+			break;
+		default:
+			break;
+		}
+	}
+
+    // Else ignore i.e., garbled message
+    //free(data);
+    return true;
+}
+
+/**
+ * FUNCTION NAME: processJoinReq
+ *
+ * DESCRIPTION: This function is run by the coordinator to process JOIN requests
+ */
+void MP1Node::processJoinReq(void *env, char *data, int size) {
+    Member *node = (Member*)env;
+
+    //first get the new node's info by deserializing
+    Address newaddr;
+    long heartbeat;
+    memcpy(newaddr.addr, data, sizeof(newaddr.addr));
+    memcpy(&heartbeat, data+1+sizeof(newaddr.addr), sizeof(long));
+
+    int id = *(int*)(&newaddr.addr);
+    short port = *(short*)(&newaddr.addr[4]);
+
+    //second serialize the table(put it in a string form)
+    char *table = serialize(node);
+
+    //next construct a message: type: JOINREPLY, content: table
+    size_t sz = sizeof(MessageHdr) + 1 + strlen(table);
+    MessageHdr *msg = (MessageHdr *) malloc(sz * sizeof(char));
+    msg->msgType = JOINREP;
+    char * ptr = (char *) (msg+1);
+    memcpy(ptr, table, strlen(table)+1);
+
+    emulNet->ENsend(&node->addr, &newaddr, (char *)msg, (int)sz);
+    free(msg);
+    free(table);
+
+    vector<MemberListEntry>::iterator it;
+    it = searchList(id, port);
+    // If the iterator returned points to the end of the list, then it is not found
+    if ( it == memberNode->memberList.end() ) {
+    	addEntryToMemberList(id, port, heartbeat);
+    }
+    
+    return;
+}
+
+/**
+ * FUNCTION NAME: procesJoinRep
+ *
+ * DESCRIPTION: This function is the message handler for JOINREP. The list will be present in the message.
+ * 				It needs to add the list to its own table. Data parameter contains the entire table
+ */
+void MP1Node::processJoinRep(void *env, char *data, int size) {
+#ifdef DEBUGLOG
+    static char s[1024];
+    char *s1 = s;
+    s1 += sprintf(s1, "Received neighbor list:");
+#endif
+    deserializeAndUpdateTable(data);
+    memberNode->inGroup = true;
+    return;
+}
+
+/**
+ * FUNCTION NAME: processUpdateReq
+ *
+ * DESCRIPTION: This function is the message handler for UPDATEREQ
+ * note: we dont need updatereq here; each node gossip its table to other nodes periodically
+ * and the gossip action is done inside the nodeloopops
+ */
+void MP1Node::processUpdateReq(void *env, char *data, int size) {
+    return;
+}
+
+/**
+ * FUNCTION NAME: processUpdateRep
+ *
+ * DESCRIPTION: This function is the message handler for UPDATEREP
+ * when each node receives a table, it needs to call the deserializeAndUpdate function to update its own table
+ * data: the real message (the table without the type )
+ */
+void MP1Node::processUpdateRep(void *env, char *data, int size) {
+    deserializeAndUpdateTable(data);
+    return;
 }
 
 /**
@@ -232,8 +358,67 @@ void MP1Node::nodeLoopOps() {
 	/*
 	 * Your code goes here
 	 */
+// 1. first clean up time-out nodes
+    deleteTimeOutNodes();
+
+    // 2. next increment heartbeat
+    memberNode->heartbeat++;
+    // get your own id and update in table
+    int id = *(int*)(&memberNode->addr.addr);
+    for ( vector<MemberListEntry>::iterator it = memberNode->memberList.begin(); it != memberNode->memberList.end(); it++ ) {
+    		// This is your own node
+            if( id == (*(it)).getid() ) {
+            	(*(it)).setheartbeat(memberNode->heartbeat);
+            }
+    }
+
+	if ( 0 == --(memberNode->pingCounter) ) {
+		char *table = serialize(memberNode);
+
+		size_t sz = sizeof(MessageHdr) + 1 + strlen(table);
+        MessageHdr *msg = (MessageHdr *)malloc(sz * sizeof(char));
+		msg->msgType = UPDATEREP;
+		char *ptr = (char *)(msg + 1);
+		memcpy(ptr, table, strlen(table)+1);
+
+		for (vector<MemberListEntry>::iterator it = memberNode->memberList.begin(); it != memberNode->memberList.end(); ++it ) {
+            Address addr;
+            decodeToAddress(&addr, (*(it)).getid(), (*(it)).getport());
+		    if ( memcmp(addr.addr, memberNode->addr.addr, sizeof(addr.addr)) != 0 ) {
+		        emulNet->ENsend(&memberNode->addr, &addr, (char *)msg, sz);
+		    }
+		}
+		free(msg);
+		free(table);
+
+		memberNode->pingCounter = TFAIL;
+	}
 
     return;
+}
+
+/**
+ * FUNCTION NAME: deleteTimeOutNodes
+ *
+ * DESCRIPTION: Delete all the nodes from the membership list who have timed out beyond TREMOVE
+ */
+void MP1Node::deleteTimeOutNodes() {
+	// If the list is empty then return
+	if ( memberNode->memberList.empty() ) {
+		return;
+	}
+
+	// get your own id
+    int id = *(int*)(&memberNode->addr.addr);
+    for ( int i = 0; i < memberNode->memberList.size(); i++ ) {
+    	if ( id != memberNode->memberList.at(i).id && ( par->getcurrtime() - (memberNode->memberList.at(i).timestamp) ) > TREMOVE ) {
+            Address addr_to_delete;
+            decodeToAddress(&addr_to_delete, memberNode->memberList.at(i).id, memberNode->memberList.at(i).port);
+            memberNode->memberList.erase(memberNode->memberList.begin() + i);
+            memberNode->nnb--;
+            log->logNodeRemove(&memberNode->addr, &addr_to_delete);
+        }
+    }
 }
 
 /**
@@ -267,6 +452,148 @@ Address MP1Node::getJoinAddress() {
  */
 void MP1Node::initMemberListTable(Member *memberNode) {
 	memberNode->memberList.clear();
+}
+
+/**
+ * FUNCTION NAME: cleanMemberListTable
+ *
+ * DESCRIPTION: Clear the membership list
+ */
+void MP1Node::cleanMemberListTable(Member *memberNode) {
+	memberNode->memberList.clear();
+}
+
+/**
+ * FUNCTION NAME: addEntryToMemberList
+ *
+ * DESCRIPTION: Add a new entry to the membership list
+ */
+vector<MemberListEntry>::iterator MP1Node::addEntryToMemberList(int id, short port, long heartbeat) {
+	vector<MemberListEntry>::iterator it;
+    if( id > par->MAX_NNB ) {
+    	cout<<"Unknown id " <<id<<endl;
+ #ifdef DEBUGLOG
+    	static char s[1024];
+    	char *s1 = s;
+    	s1 += sprintf(s1, "Unknown ID");
+#endif
+        return it;
+    }
+    MemberListEntry newEntry(id, port, heartbeat, par->getcurrtime());
+    memberNode->memberList.emplace_back(newEntry);
+    memberNode->nnb++;
+    if ( memberNode->nnb > par->MAX_NNB ) {
+    	cout <<memberNode->nnb<<" exceeds the capacity"<<endl;
+ #ifdef DEBUGLOG
+    	static char s[1024];
+    	char *s1 = s;
+    	s1 += sprintf(s1, "Exceeds membership capacity");
+#endif
+    }
+ 	Address addr;
+    decodeToAddress(&addr, id, port);
+    log->logNodeAdd(&memberNode->addr, &addr);
+
+    it = memberNode->memberList.end();
+    return --it;
+}
+
+/**
+ * FUNCTION NAME: serialize
+ *
+ * DESCRIPTION: Serialize the membership list
+ */
+char* MP1Node::serialize(Member *node)
+{
+    char *buffer = NULL;
+    for ( unsigned int i = 0; i < memberNode->memberList.size(); i++ ) {
+    	char *entry = encode(memberNode->memberList.at(i).getid(), memberNode->memberList.at(i).getport(), memberNode->memberList.at(i).getheartbeat(), memberNode->memberList.at(i).gettimestamp());
+
+        if(!buffer) {
+            asprintf(&buffer, "%s|", entry);
+        }
+        else {
+            asprintf(&buffer, "%s%s|", buffer, entry);
+        }
+        if(entry) {
+            free(entry);
+        }
+    }
+    return buffer;
+}
+
+/**
+ * FUNCTION NAME: deserializeAndUpdateTable
+ *
+ * DESCRIPTION: Deserialize the message and update the membership list
+ */
+char* MP1Node::deserializeAndUpdateTable(const char *msg){
+    char *buffer = NULL;
+    asprintf(&buffer, "%s", msg);
+
+    char * pch;
+    pch = strtok (buffer,"|");
+    while (pch != NULL) {
+        char *row = NULL;
+        asprintf(&row, "%s", pch);
+        int id;
+        short port;
+        long heartbeat;
+        long timestamp;
+
+        sscanf(row,"%d:%hi~%ld~%ld", &id, &port, &heartbeat, &timestamp);
+        vector<MemberListEntry>::iterator found = searchList(id, port);
+    
+        // If the entry already exists and the new heartbeat is bigger, do an update
+        if( found != memberNode->memberList.end() ) {
+            if( (*(found)).getheartbeat() < heartbeat ) {
+            	(*(found)).setheartbeat(heartbeat);
+            	(*(found)).settimestamp(par->getcurrtime());
+            }
+        }   
+        else {
+            addEntryToMemberList(id, port, heartbeat);
+        }     
+        pch = strtok (NULL, "|");
+
+    }
+    return NULL;
+}
+
+/**
+ * FUNCTION NAME: searchList
+ *
+ * DESCRIPTION: Search the membership list
+ */
+vector<MemberListEntry>::iterator MP1Node::searchList(int id, short port) {
+	vector<MemberListEntry>::iterator it;
+	for ( it = memberNode->memberList.begin(); it != memberNode->memberList.end(); ++it ) {
+        if( (*(it)).getid() == id ) {
+            return it;
+        }
+    }
+	return it;
+}
+
+/**
+ * FUNCTION NAME: encode
+ *
+ * DESCRIPTION: Encode the information
+ */
+char* MP1Node::encode(int id, short port, long heartbeat, long timestamp ) {
+    char* buffer = NULL;
+    asprintf(&buffer, "%d:%hi~%ld~%ld", id, port, heartbeat, timestamp );
+    return buffer;
+}
+
+/**
+ * FUNCTION NAME: decodeToAddress
+ *
+ * DESCRIPTION: Decode the information to an Address object
+ */
+void MP1Node::decodeToAddress(Address *addr, int id, short port) {
+    memcpy(&addr->addr[0], &id,  sizeof(int));
+    memcpy(&addr->addr[4], &port, sizeof(short));
 }
 
 /**
