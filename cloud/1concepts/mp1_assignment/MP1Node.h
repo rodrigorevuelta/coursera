@@ -31,8 +31,8 @@
 enum MsgTypes{
     JOINREQ,
     JOINREP,
-	UPDATEREQ,
-	UPDATEREP,
+    UPDATEREQ,
+    UPDATEREP,
     DUMMYLASTMSGTYPE
 };
 
@@ -72,12 +72,25 @@ public:
 	void nodeLoop();
 	void checkMessages();
 	bool recvCallBack(void *env, char *data, int size);
+	void processUpdateRep(void *env, char *data, int size);
+	void processUpdateReq(void *env, char *data, int size);
+	void processJoinRep(void *env, char *data, int size);
+	void processJoinReq(void *env, char *data, int size);
 	void nodeLoopOps();
 	int isNullAddress(Address *addr);
 	Address getJoinAddress();
 	void initMemberListTable(Member *memberNode);
 	void printAddress(Address *addr);
+	void deleteTimeOutNodes();
+	char* serialize(Member *node);
+	char* deserializeAndUpdateTable(const char *msg);
+	void cleanMemberListTable(Member *memberNode);
+	vector<MemberListEntry>::iterator addEntryToMemberList(int id, short port, long heartbeat);
+	char* encode(int id, short port, long heartbeat, long timestamp );
+	void decodeToAddress(Address *addr, int id, short port);
+	vector<MemberListEntry>::iterator searchList(int id, short port);
 	virtual ~MP1Node();
+
 };
 
 #endif /* _MP1NODE_H_ */
