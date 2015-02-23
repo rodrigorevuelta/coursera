@@ -29,11 +29,10 @@
  * Message Types
  */
 enum MsgTypes{
-    JOINREQ,
-    JOINREP,
-    UPDATEREQ,
-    UPDATEREP,
-    DUMMYLASTMSGTYPE
+  JOINREQ,
+  JOINREP,
+  HEARTBEAT,
+  DUMMYLASTMSGTYPE
 };
 
 /**
@@ -41,9 +40,26 @@ enum MsgTypes{
  *
  * DESCRIPTION: Header and content of a message
  */
-typedef struct MessageHdr {
-	enum MsgTypes msgType;
+typedef struct MessageHdr { // 24
+  enum MsgTypes msgType; // 0
+  int   id;          // 8
+  short port;        // 12
+  short rsv;
+  long  heartbeat;   // 14
 }MessageHdr;
+
+typedef struct MessageStruct { 
+  MessageHdr header; // 24
+  char* payload;     // 24 x n
+}MessageStruct;
+
+typedef struct MessageEntryStruct { // 24
+  int id;
+  short port;
+  short resv;
+  long heartbeat;   
+  long timestamp;   
+}MessageEntryStruct;
 
 /**
  * CLASS NAME: MP1Node
@@ -52,45 +68,51 @@ typedef struct MessageHdr {
  */
 class MP1Node {
 private:
-	EmulNet *emulNet;
-	Log *log;
-	Params *par;
-	Member *memberNode;
-	char NULLADDR[6];
+  EmulNet *emulNet;
+  Log *log;
+  Params *par;
+  Member *memberNode;
+  char NULLADDR[6];
 
 public:
-	MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
-	Member * getMemberNode() {
-		return memberNode;
-	}
-	int recvLoop();
-	static int enqueueWrapper(void *env, char *buff, int size);
-	void nodeStart(char *servaddrstr, short serverport);
-	int initThisNode(Address *joinaddr);
-	int introduceSelfToGroup(Address *joinAddress);
-	int finishUpThisNode();
-	void nodeLoop();
-	void checkMessages();
-	bool recvCallBack(void *env, char *data, int size);
-	void processUpdateRep(void *env, char *data, int size);
-	void processUpdateReq(void *env, char *data, int size);
-	void processJoinRep(void *env, char *data, int size);
-	void processJoinReq(void *env, char *data, int size);
-	void nodeLoopOps();
-	int isNullAddress(Address *addr);
-	Address getJoinAddress();
-	void initMemberListTable(Member *memberNode);
-	void printAddress(Address *addr);
-	void deleteTimeOutNodes();
-	char* serialize(Member *node);
-	char* deserializeAndUpdateTable(const char *msg);
-	void cleanMemberListTable(Member *memberNode);
-	vector<MemberListEntry>::iterator addEntryToMemberList(int id, short port, long heartbeat);
-	char* encode(int id, short port, long heartbeat, long timestamp );
-	void decodeToAddress(Address *addr, int id, short port);
-	vector<MemberListEntry>::iterator searchList(int id, short port);
-	virtual ~MP1Node();
-
+  MP1Node(Member *, Params *, EmulNet *, Log *, Address *);
+  Member * getMemberNode() {
+    return memberNode;
+  }
+  int recvLoop();
+  static int enqueueWrapper(void *env, char *buff, int size);
+  void nodeStart(char *servaddrstr, short serverport);
+  int initThisNode(Address *joinaddr);
+  int introduceSelfToGroup(Address *joinAddress);
+  int finishUpThisNode();
+  void nodeLoop();
+  void checkMessages();
+  bool recvCallBack(void *env, char *data, int size);
+  void nodeLoopOps();
+  int isNullAddress(Address *addr);
+  Address getJoinAddress();
+  void initMemberListTable(Member *memberNode);
+  void printAddress(Address *addr);
+  char* createMessage(MsgTypes type, int* size);
+  void sendMessage(MsgTypes type, Address *joinaddr);
+  Address getAddress(MemberListEntry entry);
+  bool shouldRemove(MemberListEntry entry);
+  void checkHeartBeatTimeout();
+  void updateMemberList(MemberListEntry newEntry);
+  void updateMemberList();
+  void sendHeartBeat();
+  void addNewEntry(int id, short port, long heartbeat);
+  void addNewEntry(MemberListEntry entry);
+  Address getAddress(int id, short port);
+  int getId(Address addr);
+  short getPort(Address addr);
+  MessageEntryStruct *createEntryStruct(MemberListEntry entry);
+  MemberListEntry* createMemberListEntry(MessageEntryStruct *mes);
+  void updateMemberList(int remainSize, MessageEntryStruct* currentEntry);
+  bool isSameAddress(MemberListEntry x, MemberListEntry y);
+  bool isSameAddress(Address x, Address y);
+  bool isTimeout(MemberListEntry entry);
+  virtual ~MP1Node();
 };
 
 #endif /* _MP1NODE_H_ */
