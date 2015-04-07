@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 
 /**
  * An Activity that downloads an image, stores it in a local file on
@@ -14,6 +17,14 @@ public class DownloadImageActivity extends Activity {
      * Debugging tag used by the Android logger.
      */
     private final String TAG = getClass().getSimpleName();
+
+	private Handler mHandler = new Handler(Looper.getMainLooper());
+
+	private Uri url;
+
+	private Uri path;
+
+	private Intent data;
 
     /**
      * Hook method called when a new instance of Activity is created.
@@ -27,13 +38,38 @@ public class DownloadImageActivity extends Activity {
         // Always call super class for necessary
         // initialization/implementation.
         // @@ TODO -- you fill in here.
+		super.onCreate(savedInstanceState);
 
         // Get the URL associated with the Intent data.
         // @@ TODO -- you fill in here.
 
+		url = getIntent().getData();
+
         // Download the image in the background, create an Intent that
         // contains the path to the image file, and set this as the
         // result of the Activity.
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				path = DownloadUtils
+						.downloadImage(getApplicationContext(), url);
+				data = new Intent();
+				data.setData(path);
+				setResult(RESULT_OK, data);
+
+				mHandler.post(new Runnable() {
+
+					@Override
+					public void run() {
+						Log.i(TAG, "Thread is running:" + Thread.currentThread().getName());
+						DownloadImageActivity.this.finish();
+					}
+
+				});
+			}
+		}).start();
 
         // @@ TODO -- you fill in here using the Android "HaMeR"
         // concurrency framework.  Note that the finish() method

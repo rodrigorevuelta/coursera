@@ -52,15 +52,24 @@ public class MainActivity extends LifecycleLoggingActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // Always call super class for necessary
+        super.onCreate(savedInstanceState);
+
         // initialization/implementation.
         // @@ TODO -- you fill in here.
-
         // Set the default layout.
         // @@ TODO -- you fill in here.
-
+        setContentView(R.layout.main_activity);
         // Cache the EditText that holds the urls entered by the user
         // (if any).
-        // @@ TODO -- you fill in here.
+        mUrlEditText = (EditText) findViewById(R.id.url);
+
+	Button mDownloadButton = (Button) findViewById(R.id.button1);
+	mDownloadButton.setOnClickListener(new OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			downloadImage(v);
+		}
+	});
     }
 
     /**
@@ -81,12 +90,20 @@ public class MainActivity extends LifecycleLoggingActivity {
             // it's an Intent that's implemented by the
             // DownloadImageActivity.
             // @@ TODO - you fill in here.
+            Uri mURL = getUrl();
+
+            if (mURL != null) {
+
+                Intent mIntent = makeDownloadImageIntent(mURL);
 
             // Start the Activity associated with the Intent, which
             // will download the image and then return the Uri for the
             // downloaded image file via the onActivityResult() hook
             // method.
             // @@ TODO -- you fill in here.
+            startActivityForResult(mIntent, DOWNLOAD_IMAGE_REQUEST);
+
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -99,25 +116,26 @@ public class MainActivity extends LifecycleLoggingActivity {
      * additional data from it.
      */
     @Override
-    protected void onActivityResult(int requestCode,
-                                    int resultCode,
-                                    Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Check if the started Activity completed successfully.
         // @@ TODO -- you fill in here, replacing true with the right
         // code.
-        if (true) {
+        if (resultCode == RESULT_OK) {
             // Check if the request code is what we're expecting.
             // @@ TODO -- you fill in here, replacing true with the
             // right code.
-            if (true) {
+            if (requestCode == DOWNLOAD_IMAGE_REQUEST) {
                 // Call the makeGalleryIntent() factory method to
                 // create an Intent that will launch the "Gallery" app
                 // by passing in the path to the downloaded image
                 // file.
                 // @@ TODO -- you fill in here.
+		Uri path = data.getData();
 
+		Intent gIntent = makeGalleryIntent(path.toString());
                 // Start the Gallery Activity.
                 // @@ TODO -- you fill in here.
+		startActivity(gIntent);
             }
         }
         // Check if the started Activity did not complete successfully
@@ -125,7 +143,8 @@ public class MainActivity extends LifecycleLoggingActivity {
         // download contents at the given URL.
         // @@ TODO -- you fill in here, replacing true with the right
         // code.
-        else if (true) {
+		else if (resultCode == RESULT_CANCELED) {
+			Log.i(TAG, "Operation cancelled");
         }
     }    
 
@@ -138,7 +157,11 @@ public class MainActivity extends LifecycleLoggingActivity {
         // the image.
     	// TODO -- you fill in here, replacing "null" with the proper
     	// code.
-        return null;
+		Intent mIntent = new Intent();
+		mIntent.setAction(Intent.ACTION_VIEW);
+		mIntent.setDataAndType(Uri.fromFile(new File(pathToImageFile)), "image/*");
+		
+		return mIntent;
     }
 
     /**
@@ -149,7 +172,11 @@ public class MainActivity extends LifecycleLoggingActivity {
         // Create an intent that will download the image from the web.
     	// TODO -- you fill in here, replacing "null" with the proper
     	// code.
-        return null;
+	Intent mIntent = new Intent();
+        mIntent.setData(url);
+	mIntent.setAction(Intent.ACTION_WEB_SEARCH);
+	
+        return mIntent;
     }
 
     /**
@@ -170,12 +197,10 @@ public class MainActivity extends LifecycleLoggingActivity {
         // toast if the URL is invalid.
         // @@ TODO -- you fill in here, replacing "true" with the
         // proper code.
-        if (true)
+		if (url != null)
             return url;
         else {
-            Toast.makeText(this,
-                           "Invalid URL",
-                           Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, "Invalid URL", Toast.LENGTH_SHORT).show();
             return null;
         } 
     }
@@ -184,12 +209,10 @@ public class MainActivity extends LifecycleLoggingActivity {
      * This method is used to hide a keyboard after a user has
      * finished typing the url.
      */
-    public void hideKeyboard(Activity activity,
-                             IBinder windowToken) {
-        InputMethodManager mgr =
-            (InputMethodManager) activity.getSystemService
-            (Context.INPUT_METHOD_SERVICE);
-        mgr.hideSoftInputFromWindow(windowToken,
-                                    0);
+	public void hideKeyboard(Activity activity, IBinder windowToken) {
+		InputMethodManager mgr = (InputMethodManager) activity
+				.getSystemService(Context.INPUT_METHOD_SERVICE);
+		mgr.hideSoftInputFromWindow(windowToken, 0);
     }
+	
 }
