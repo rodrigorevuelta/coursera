@@ -4,7 +4,6 @@ import java.util.concurrent.CyclicBarrier;
 
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
 import android.os.Message;
 
 /**
@@ -15,13 +14,20 @@ import android.os.Message;
  *        respectively, on the display.
  */
 public class PlayPingPong implements Runnable {
-	private static final int PING = 0;
-	private static final int PONG = 1;
+	
     /**
      * Keep track of whether a Thread is printing "ping" or "pong".
      */
     private enum PingPong {
-        PING, PONG
+        PING(0), PONG(1);
+        private int index;
+        
+        PingPong(Integer index){
+        	this.index = index;
+        }
+        public int getIndex(){
+        	return index;
+        }
     };
 
     /**
@@ -93,9 +99,9 @@ public class PlayPingPong implements Runnable {
             // Handler, i.e., either PING or PONG.
             // @@ TODO - you fill in here.
         	if (mMyType == PingPong.PING) {
-				handler[PING] = new Handler(this);
+				handler[PingPong.PING.getIndex()] = new Handler(this);
 			} else {
-				handler[PONG] = new Handler(this);
+				handler[PingPong.PONG.getIndex()] = new Handler(this);
 			}
 
             try {
@@ -113,8 +119,8 @@ public class PlayPingPong implements Runnable {
             // @@ TODO - you fill in here.
             if (mMyType == PingPong.PONG) {
 				Message msg = Message.obtain();
-				msg.obj = handler[PONG];
-				handler[PING].sendMessage(msg);
+				msg.obj = handler[PingPong.PONG.getIndex()];
+				handler[PingPong.PING.getIndex()].sendMessage(msg);
 			}
         }
 
@@ -204,7 +210,6 @@ public class PlayPingPong implements Runnable {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		
         // Let the user know we're done.
         mOutputStrategy.print("Done!");
     }
