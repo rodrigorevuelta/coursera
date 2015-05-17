@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">AdvancedDownloadImageViewer</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="enter_url">Enter you image url here</string>
+    <string name="download_image">Download and Filter</string>
+    <string name="download">Download Activity</string>
+    <string name="filter">Filter Activity</string>
+
+</resources>
