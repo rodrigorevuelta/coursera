@@ -137,7 +137,7 @@ public class DownloadImageService extends IntentService {
     	Uri uriImageToDownload = intent.getData();
         // Get the directory pathname where the image will be stored.
         // @@ TODO -- you fill in here.
-    	String dirPathName = getDirectoryPathName(data);
+    	String dirPathName = data.getString(DIRECTORY_PATHNAME);
         // Download the requested image.
         // @@ TODO -- you fill in here.
     	Uri downloadedImage = Utils.downloadImage(
@@ -147,22 +147,11 @@ public class DownloadImageService extends IntentService {
         // Extract the Messenger stored as an extra in the
         // intent under the key MESSENGER.
         // @@ TODO -- you fill in here.
-    	Messenger messenger = getMessengerFromBundle(data);
+    	Messenger messenger = data.getParcelable(MESSENGER);
         // Send the path to the image file back to the
         // MainActivity via the messenger.
         // @@ TODO -- you fill in here.
     	sendPath(messenger, downloadedImage, Uri.parse(dirPathName));
-    }
-    
-    private String getDirectoryPathName(Bundle data) {
-        // Extract the directory pathname from the bundle.
-        return data.getString(DIRECTORY_PATHNAME);
-    }
-    
-    
-    private Messenger getMessengerFromBundle(Bundle data) {
-    	// Extract the Messenger from the bundle
-        return data.getParcelable(MESSENGER);
     }
 
     /**
@@ -203,24 +192,20 @@ public class DownloadImageService extends IntentService {
         // @@ TODO -- you fill in here.
         Bundle bundle = new Bundle();
 
-        if (pathToImageFile != null)
-        {
-
         // Put the URL to the image file into the Bundle via the
         // IMAGE_URL key.
         // @@ TODO -- you fill in here.
-        	 bundle.putString(IMAGE_URL, pathToImageFile.toString());
+        	 bundle.putString(IMAGE_URL, url.toString());
         // Return the result to indicate whether the download
         // succeeded or failed.
         // @@ TODO -- you fill in here.
+        if (pathToImageFile != null) {
         	   message.arg1 = Activity.RESULT_OK;	
         // Put the path to the image file into the Bundle via the
         // IMAGE_PATHNAME key only if the download succeeded.
         // @@ TODO -- you fill in here.
-        	   bundle.putString(IMAGE_PATHNAME, url.toString());
-        }
-        else
-        {
+        	   bundle.putString(IMAGE_PATHNAME, pathToImageFile.toString());
+        } else {
         	message.arg1 = Activity.RESULT_CANCELED;
         }
         // Set the Bundle to be the data in the message.
