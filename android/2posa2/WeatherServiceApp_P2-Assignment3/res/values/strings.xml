@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Weather Service App</string>
+    <string name="location">Please enter a location</string>
+    <string name="action_settings">Settings</string>
+    <string name="twoWaySync">Sync Lookup</string>
+    <string name="twoWayAsync">Async Lookup</string>
+
+</resources>
